@@ -10,13 +10,13 @@ from fpdf import FPDF
 from explainerdashboard import RegressionExplainer, ExplainerDashboard
 import streamlit.components.v1 as components
 import shutil
-
+import numpy as np
 
 shutil.rmtree('./images')
 if not os.path.exists("images"):
     os.mkdir("images")
 
-favicon  = Image.open("./favicon.png")
+favicon = Image.open("./favicon.png")
 st.set_page_config(layout="wide", page_title='AIFE', page_icon=favicon)
 
 hide_streamlit_style = """
@@ -31,7 +31,7 @@ st.sidebar.title('RIPIK.AI Anasyer')
 
 
 logo = Image.open('./Logo.png')
-st.image(logo, width=200)   
+st.image(logo, width=200)
 # st.markdown("<p style='text-align: center; color: black;'><b>AI</b> <b>D</b>evelopment, <b>E</b>xplainability, and <b>A</b>bstraction  \n <br> <small><i>Minimalistic No-Code platform to convert your AI Ideas into Reality</i></small></p>", unsafe_allow_html=True)
 
 file = None
@@ -49,12 +49,16 @@ if(file is None):
 if file is not None:
     DataLoder = load_data.DataLoader()
     df = DataLoder.load_data("upload", file_name=file)
+    # if any column contains a row that is not numeric give an option to ignore that column or drop that row
+    # st.write( df[~df.applymap(np.isreal).all(1)].astype(str))
+
 
 if df is not None:
     with st.expander("Show Data"):
         col1, col2, col3 = st.columns([0.1, 0.8, 0.1])
         with col2:
-            st.dataframe(df)
+            st.dataframe(df.astype(str))
+
     _, col1, col2, col3 = st.columns([0.1, 0.4, 0.4, 0.1])
     target = "--SELECT--"
     ignore_cols = []
@@ -79,11 +83,11 @@ if df is not None:
         if start:
             model = xgb()
             with st.spinner("Training Model..."):
-                model.fit(X, Y)
+                model.fit(X._get_numeric_data(), np.ravel(Y, order='C'))
 
         if model is not None:
             st.subheader("Partial Dependence Plots")
-            with st.spinner('Generating Partial Dependancies Plot (This may take some time) ...'):
+            with st.spinner('Generating Partial Dependancy Plots (This may take some time) ...'):
                 with st.expander("Partial Dependancy Plots"):
                     st_cols = st.columns([0.5, 0.5])
                     i = 0
@@ -93,38 +97,45 @@ if df is not None:
                             pardep = partial_dependence(model, X, col)
                             line_plot = px.line(x=pardep[1][0], y=pardep[0][0], title=f"{target} vs {col}", labels={
                                                 'x': col.upper(), 'y': target.upper()}, line_shape='spline')
-                            line_plot.write_image(f"images/{j}_{col}.png")
+                            path_name = str(col).replace(
+                                "\\", "-").replace("/", "-").replace(" ", "-").replace(".", "-")
+                            line_plot.write_image(
+                                f"images/{j}_{path_name}.png")
                             st.plotly_chart(line_plot)
                             i = (i+1) % 2
-                            j+=1
-                        with st_cols[i]:    
-                            box_plot = px.box(X, y=col, title=f"{col} Distribution",points='all')
-                            box_plot.write_image(f"images/{j}_{col}_box.png")
+                            j += 1
+                        with st_cols[i]:
+                            box_plot = px.box(
+                                X, y=col, title=f"{col} Distribution", points='all')
+                            path_name = str(col).replace(
+                                "\\", "-").replace("/", "-").replace(" ", "-").replace(".", "-")
+                            line_plot.write_image(
+                                f"images/{j}_{path_name}.png")
                             st.plotly_chart(box_plot)
                             i = (i+1) % 2
-                            j+=1
-                    
+                            j += 1
+
                     pdf = FPDF()
                     for image in os.listdir("images"):
                         pdf.add_page()
                         pdf.image(f"images/{image}", 10, 10, 200, 100)
-                    
+
                     pdf.output("report.pdf", "F")
 
             st.subheader("XAI Dashboard")
             with st.spinner('Creating Explainability Dashboard... (may take some time)'):
                 with st.expander("Show XAI Dashboard"):
-                    explainer = RegressionExplainer(model, X, Y, 
-                                n_jobs=4,
-                                precision='float32',
-                                )
+                    explainer = RegressionExplainer(model, X, Y,
+                                                    n_jobs=4,
+                                                    precision='float32',
+                                                    )
 
-                    db = ExplainerDashboard(explainer, 
-                        shap_interaction = False, 
-                        whatif = False,
-                        contributions = False,
-                        hide_poweredby = True,
-                        )
+                    db = ExplainerDashboard(explainer,
+                                            shap_interaction=False,
+                                            whatif=False,
+                                            contributions=False,
+                                            hide_poweredby=True,
+                                            )
 
-                    components.html(db.to_html(),scrolling=True,height=800)
+                    components.html(db.to_html(), scrolling=True, height=800)
                     st.text("\n")
