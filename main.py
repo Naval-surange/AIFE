@@ -12,6 +12,8 @@ import streamlit.components.v1 as components
 import shutil
 import numpy as np
 
+from downloader import get_binary_file_downloader_html
+
 shutil.rmtree('./images')
 if not os.path.exists("images"):
     os.mkdir("images")
@@ -121,8 +123,9 @@ if df is not None:
                         pdf.image(f"images/{image}", 10, 10, 200, 100)
 
                     pdf.output("report.pdf", "F")
-                    with open("report.pdf","rb") as rep:
-                        st.download_button("Download report",rep,file_name="report.pdf")
+                    st.markdown(get_binary_file_downloader_html(
+                        "report.pdf", "report"), unsafe_allow_html=True)
+
             st.subheader("XAI Dashboard")
             with st.spinner('Creating Explainability Dashboard... (may take some time)'):
                 with st.expander("Show XAI Dashboard"):
