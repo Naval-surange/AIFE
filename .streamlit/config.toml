@@ -1,0 +1,4 @@
+[server]
+port = 8052
+enableCORS=false
+enableXsrfProtection=false

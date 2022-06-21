@@ -27,7 +27,7 @@ hide_streamlit_style = """
                     """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.sidebar.title('RIPIK.AI Anasyer')
+st.sidebar.title('RIPIK.AI Analyser')
 
 
 logo = Image.open('./Logo.png')
@@ -40,7 +40,7 @@ file = st.file_uploader("Upload File", type=["csv", "tsv", "xls", "xlsx"])
 
 if(file is None):
     st.write("1. Upload any csv, tsv, xls or xlsx file.")
-    st.write("2. Choose the target Variable.")
+    st.write("2. Choose the target variable.")
     st.write("3. Select columns to ignore.")
     st.markdown("4. <i>Run Experiment</i> and Train your model within minutes <i>(Feature Engineering & Training will be done automatically)</i>.", unsafe_allow_html=True)
     st.markdown("---")
@@ -63,7 +63,7 @@ if df is not None:
     target = "--SELECT--"
     ignore_cols = []
     with col1:
-        target = st.selectbox("Select Target Variable", [
+        target = st.selectbox("Select target variable", [
                               "--SELECT--"]+[x for x in df.columns])
     with col2:
         ignore_cols = st.multiselect("Select Columns to Ignore", [
@@ -121,7 +121,8 @@ if df is not None:
                         pdf.image(f"images/{image}", 10, 10, 200, 100)
 
                     pdf.output("report.pdf", "F")
-
+                    with open("report.pdf","rb") as rep:
+                        st.download_button("Download report",rep,file_name="report.pdf")
             st.subheader("XAI Dashboard")
             with st.spinner('Creating Explainability Dashboard... (may take some time)'):
                 with st.expander("Show XAI Dashboard"):
@@ -131,6 +132,7 @@ if df is not None:
                                                     )
 
                     db = ExplainerDashboard(explainer,
+                                            title="Explainable AI Dashboard",
                                             shap_interaction=False,
                                             whatif=False,
                                             contributions=False,
