@@ -29,7 +29,7 @@ hide_streamlit_style = """
                     """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.sidebar.title('RIPIK.AI Analyser')
+st.sidebar.title('AIFE Analyser')
 
 
 logo = Image.open('./Logo.png')
@@ -144,3 +144,6 @@ if df is not None:
 
                     components.html(db.to_html(), scrolling=True, height=800)
                     st.text("\n")
+
+st.markdown("<small><center><b>Made with ❤️ by Naval Surange</b></center></small>",
+                unsafe_allow_html=True)
